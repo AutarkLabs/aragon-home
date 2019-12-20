@@ -180,7 +180,7 @@ const SidePanelContainer = styled.div`
   bottom: 0;
   right: 30px;
   left: 30px;
-  top: 60px;
+  top: 80px;
 
   @media only screen and (max-height: 380px) {
     position: relative;
