@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-// import PropTypes from 'prop-types'
+import PropTypes from 'prop-types'
 import styled from 'styled-components'
 
 import { useAragonApi } from '@aragon/api-react'
@@ -15,6 +15,8 @@ import {
   EmptyStateCard,
   GU,
   Button,
+  Text,
+  useTheme,
 } from '@aragon/ui'
 
 import PanelContent from './components/panel/PanelContent'
@@ -25,6 +27,7 @@ import illustration from './assets/empty.svg'
 const Illustration = () => <img src={illustration} height={20 * GU} />
 
 function App() {
+  const theme = useTheme()
   const [panelVisible, setPanelVisible] = useState(false)
   // TODO: useState(false) to start editMode disabled
   // const [editMode, setEditMode] = useState(true)
@@ -32,7 +35,7 @@ function App() {
   const [selectedWidget, setSelectedWidget] = useState(0)
 
   const { api, appState } = useAragonApi()
-  const { entries } = appState
+  const { entries = [] } = appState
 
   const handleClickUpdateWidget = index => e => {
     setSelectedWidget(index)
@@ -61,34 +64,7 @@ function App() {
   //   setEditMode(!editMode)
   // }
 
-  const SideContent = () => (
-    <SidePanel
-      opened={panelVisible}
-      onClose={closePanel}
-      title="Content Block Editor"
-    >
-      <SidePanelContainer>
-        <PanelContent
-          ipfsAddr={
-            entries !== undefined &&
-            selectedWidget !== null &&
-            entries[selectedWidget].addr
-          }
-          content={
-            entries !== undefined &&
-            selectedWidget !== null &&
-            entries[selectedWidget].content
-          }
-          newWidget={newWidget}
-          updateWidget={updateWidget}
-          closePanel={closePanel}
-          position={selectedWidget}
-        />
-      </SidePanelContainer>
-    </SidePanel>
-  )
-
-  if (!entries) {
+  if (entries.length === 0) {
     return (
       <Main>
         <EmptyLayout>
@@ -99,11 +75,29 @@ function App() {
                 onClick={handleClickNewWidget}
               />
             }
-            text="No information here"
+            text={
+              <>
+                <Text>No information here</Text>
+                <Text.Block
+                  size="small"
+                  color={`${theme.surfaceContentSecondary}`}
+                >
+                  Present important information to current and prospective
+                  members of your organization.
+                </Text.Block>
+              </>
+            }
             illustration={<Illustration />}
           />
         </EmptyLayout>
-        <SideContent />
+        <SideContent
+          panelVisible={panelVisible}
+          closePanel={closePanel}
+          entries={entries}
+          selectedWidget={selectedWidget}
+          newWidget={newWidget}
+          updateWidget={updateWidget}
+        />
       </Main>
     )
   }
@@ -161,9 +155,60 @@ function App() {
           <WidgetsLayout> {widgetList} </WidgetsLayout>
         </AppView>
       </BaseLayout>
-      <SideContent />
+      <SideContent
+        panelVisible={panelVisible}
+        closePanel={closePanel}
+        entries={entries}
+        selectedWidget={selectedWidget}
+        newWidget={newWidget}
+        updateWidget={updateWidget}
+      />
     </Main>
   )
+}
+
+const SideContent = ({
+  panelVisible,
+  closePanel,
+  entries,
+  selectedWidget,
+  newWidget,
+  updateWidget,
+}) => (
+  <SidePanel
+    opened={panelVisible}
+    onClose={closePanel}
+    title="Content Block Editor"
+  >
+    <SidePanelContainer>
+      {entries.length !== 0 && selectedWidget !== null ? (
+        <PanelContent
+          ipfsAddr={entries[selectedWidget].addr}
+          content={entries[selectedWidget].content}
+          newWidget={newWidget}
+          updateWidget={updateWidget}
+          closePanel={closePanel}
+          position={selectedWidget}
+        />
+      ) : (
+        <PanelContent
+          newWidget={newWidget}
+          updateWidget={updateWidget}
+          closePanel={closePanel}
+          position={selectedWidget}
+        />
+      )}
+    </SidePanelContainer>
+  </SidePanel>
+)
+
+SideContent.propTypes = {
+  panelVisible: PropTypes.bool.isRequired,
+  closePanel: PropTypes.func.isRequired,
+  entries: PropTypes.array.isRequired,
+  selectedWidget: PropTypes.number,
+  newWidget: PropTypes.func.isRequired,
+  updateWidget: PropTypes.func.isRequired,
 }
 
 const BaseLayout = styled.div`
