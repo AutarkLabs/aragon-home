@@ -26,12 +26,106 @@ import illustration from './assets/empty.svg'
 
 const Illustration = () => <img src={illustration} height={20 * GU} />
 
-function App() {
+function Routes({ handleClickNewWidget, handleClickUpdateWidget }) {
   const theme = useTheme()
+  const { appState } = useAragonApi()
+  const { entries = [] } = appState
+
+  if (entries.length === 0) {
+    return (
+      <EmptyLayout>
+        <EmptyStateCard
+          action={
+            <Button
+              label="Customize about page"
+              onClick={handleClickNewWidget}
+            />
+          }
+          text={
+            <>
+              <Text>No information here</Text>
+              <Text.Block
+                size="small"
+                color={`${theme.surfaceContentSecondary}`}
+              >
+                Present important information to current and prospective members
+                of your organization
+              </Text.Block>
+            </>
+          }
+          illustration={<Illustration />}
+        />
+      </EmptyLayout>
+    )
+  }
+
+  return (
+    <BaseLayout>
+      <AppView appBar={<AppBar title="Home" />}>
+        <WidgetsLayout>
+          {entries.map((widget, index) => (
+            <Widget
+              key={index}
+              id={index}
+              isLoading={widget.isLoading}
+              errorMessage={widget.errorMessage}
+              content={widget.content}
+              ipfsAddr={widget.addr}
+              handleClick={handleClickUpdateWidget}
+              active={false}
+            />
+          ))}
+        </WidgetsLayout>
+      </AppView>
+    </BaseLayout>
+  )
+}
+
+Routes.propTypes = {
+  handleClickNewWidget: PropTypes.func.isRequired,
+  handleClickUpdateWidget: PropTypes.func.isRequired,
+}
+
+function SideContent({
+  panelVisible,
+  closePanel,
+  selectedWidget,
+  newWidget,
+  updateWidget,
+}) {
+  const { appState } = useAragonApi()
+  const { entries = [] } = appState
+
+  return (
+    <SidePanel
+      opened={panelVisible}
+      onClose={closePanel}
+      title="Content Block Editor"
+    >
+      <SidePanelContainer>
+        <PanelContent
+          closePanel={closePanel}
+          content={selectedWidget && entries[selectedWidget].content}
+          ipfsAddr={selectedWidget && entries[selectedWidget].addr}
+          newWidget={newWidget}
+          position={selectedWidget}
+          updateWidget={updateWidget}
+        />
+      </SidePanelContainer>
+    </SidePanel>
+  )
+}
+
+SideContent.propTypes = {
+  panelVisible: PropTypes.bool.isRequired,
+  closePanel: PropTypes.func.isRequired,
+  selectedWidget: PropTypes.number,
+  newWidget: PropTypes.func.isRequired,
+  updateWidget: PropTypes.func.isRequired,
+}
+
+function App() {
   const [panelVisible, setPanelVisible] = useState(false)
-  // TODO: useState(false) to start editMode disabled
-  // const [editMode, setEditMode] = useState(true)
-  const [editMode] = useState(true)
   const [selectedWidget, setSelectedWidget] = useState(0)
 
   const { api, appState } = useAragonApi()
@@ -59,156 +153,21 @@ function App() {
     return api.addWidget(_ipfsAddr)
   }
 
-  // TODO: temporarily disabled
-  // const toggleEditMode = () => {
-  //   setEditMode(!editMode)
-  // }
-
-  if (entries.length === 0) {
-    return (
-      <Main scrollView={false}>
-        <EmptyLayout>
-          <EmptyStateCard
-            action={
-              <Button
-                label="Customize about page"
-                onClick={handleClickNewWidget}
-              />
-            }
-            text={
-              <>
-                <Text>No information here</Text>
-                <Text.Block
-                  size="small"
-                  color={`${theme.surfaceContentSecondary}`}
-                >
-                  Present important information to current and prospective
-                  members of your organization.
-                </Text.Block>
-              </>
-            }
-            illustration={<Illustration />}
-          />
-        </EmptyLayout>
-        <SideContent
-          panelVisible={panelVisible}
-          closePanel={closePanel}
-          entries={entries}
-          selectedWidget={selectedWidget}
-          newWidget={newWidget}
-          updateWidget={updateWidget}
-        />
-      </Main>
-    )
-  }
-
-  const widgetList =
-    entries &&
-    entries.map((widget, index) => (
-      <Widget
-        key={index}
-        id={index}
-        isLoading={widget.isLoading}
-        errorMessage={widget.errorMessage}
-        content={widget.content}
-        ipfsAddr={widget.addr}
-        handleClick={handleClickUpdateWidget}
-        active={editMode}
-      />
-    ))
   return (
-    <Main>
-      <BaseLayout>
-        <AppView
-          appBar={
-            <AppBar
-              title="Home"
-              // TODO: uncomment this block for edit functionality
-              // endContent={
-              //   <div>
-              //     {editMode && (
-              //       <div>
-              //         <Button
-              //           mode="outline"
-              //           onClick={toggleEditMode}
-              //           style={{ marginRight: 20 }}
-              //         >
-              //           Cancel and Exit
-              //         </Button>
-
-              //         <Button mode="strong" onClick={toggleEditMode}>
-              //           Submit changes
-              //         </Button>
-              //       </div>
-              //     )}
-
-              //     {!editMode && (
-              //       <Button mode="strong" onClick={toggleEditMode}>
-              //         Edit Page
-              //       </Button>
-              //     )}
-              //   </div>
-              // }
-            />
-          }
-        >
-          <WidgetsLayout> {widgetList} </WidgetsLayout>
-        </AppView>
-      </BaseLayout>
+    <Main scrollView={!!entries.length}>
+      <Routes
+        handleClickUpdateWidget={handleClickUpdateWidget}
+        handleClickNewWidget={handleClickNewWidget}
+      />
       <SideContent
         panelVisible={panelVisible}
         closePanel={closePanel}
-        entries={entries}
         selectedWidget={selectedWidget}
         newWidget={newWidget}
         updateWidget={updateWidget}
       />
     </Main>
   )
-}
-
-const SideContent = ({
-  panelVisible,
-  closePanel,
-  entries,
-  selectedWidget,
-  newWidget,
-  updateWidget,
-}) => (
-  <SidePanel
-    opened={panelVisible}
-    onClose={closePanel}
-    title="Content Block Editor"
-  >
-    <SidePanelContainer>
-      {entries.length !== 0 && selectedWidget !== null ? (
-        <PanelContent
-          ipfsAddr={entries[selectedWidget].addr}
-          content={entries[selectedWidget].content}
-          newWidget={newWidget}
-          updateWidget={updateWidget}
-          closePanel={closePanel}
-          position={selectedWidget}
-        />
-      ) : (
-        <PanelContent
-          newWidget={newWidget}
-          updateWidget={updateWidget}
-          closePanel={closePanel}
-          position={selectedWidget}
-        />
-      )}
-    </SidePanelContainer>
-  </SidePanel>
-)
-
-SideContent.propTypes = {
-  panelVisible: PropTypes.bool.isRequired,
-  closePanel: PropTypes.func.isRequired,
-  entries: PropTypes.array.isRequired,
-  selectedWidget: PropTypes.number,
-  newWidget: PropTypes.func.isRequired,
-  updateWidget: PropTypes.func.isRequired,
 }
 
 const BaseLayout = styled.div`
