@@ -66,7 +66,7 @@ function App() {
 
   if (entries.length === 0) {
     return (
-      <Main>
+      <Main scrollView={false}>
         <EmptyLayout>
           <EmptyStateCard
             action={
@@ -219,7 +219,7 @@ const BaseLayout = styled.div`
 
 const EmptyLayout = styled.div`
   display: flex;
-  height: 95vh;
+  height: 100vh;
   justify-content: center;
   align-items: center;
 `
